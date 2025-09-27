@@ -1,24 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+About this repository
+---------------------
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+This repository contains the Finsync marketing site built with Next.js (App Router), React and TypeScript. It uses Tailwind CSS for styling and Biome for linting/formatting. The app is a static/SSR-friendly site with a main landing page at `src/app/page.tsx` and a collection of presentational components under `src/components`.
+
+Quick facts
+-----------
+
+- Next.js: 15.x (App Router)
+- React: 19.x
+- TypeScript: 5.x
+- Styling: Tailwind CSS 4
+- Linter/Formatter: Biome
+
+Available scripts
+-----------------
+
+Use the package manager of your choice (pnpm/yarn/npm/bun). Common scripts are defined in `package.json`:
+
+- `npm run dev` — run Next.js in development mode (uses turbopack in this project)
+- `npm run build` — build the production app
+- `npm run start` — start the built app
+- `npm run lint` — run Biome checks
+- `npm run format` — run Biome formatter (writes changes)
+
+Environment
+-----------
+
+The app reads `NEXT_PUBLIC_SITE_URL` for Open Graph image URLs and canonical links. Example:
+
+```
+NEXT_PUBLIC_SITE_URL=https://your-site.com
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Project structure (important files)
+----------------------------------
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `src/app/page.tsx` — main landing page + metadata
+- `src/app/layout.tsx` — application layout and global providers
+- `src/app/globals.css` — global Tailwind styles
+- `src/components/` — presentational React components used on the page (Hero, Navbar, Footer, etc.)
+- `public/` — static assets: images and svgs referenced from the site
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Getting started (Windows, using cmd.exe)
+---------------------------------------
+
+1. Install dependencies (pnpm recommended if you use the lockfile):
+
+```powershell
+pnpm install
+```
+
+2. Start development server:
+
+```powershell
+pnpm dev
+```
+
+3. Build for production:
+
+```powershell
+pnpm build
+pnpm start
+```
+
+Notes and troubleshooting
+-------------------------
+
+- The project uses Turbopack for dev/build via the `--turbopack` flag in scripts. If you run into issues, try removing `--turbopack` from the script or set the `NEXT_TELEMETRY_DISABLED=1` env var to silence telemetry.
+- If Tailwind styles don't appear, ensure `src/app/globals.css` is imported by `src/app/layout.tsx` and that Tailwind is properly configured in `postcss.config.mjs` and `tailwind.config.*` if present.
+- For linting/formatting, Biome is configured. Run `npm run lint` and `npm run format`.
+
+Contributing
+------------
+
+This is primarily a static marketing site. Small changes to copy or styling can be made by editing files under `src/app` and `src/components`. Open a PR with the changes and ensure `pnpm build` completes.
+
+License
+-------
+
+Replace with your license information if needed.
 
 ## Learn More
 
