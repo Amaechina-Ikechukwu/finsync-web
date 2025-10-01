@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AnimatedPattern from "@/components/AnimatedPattern";
+import { AuthProvider } from "@/context/AuthContext";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
@@ -93,6 +94,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
         <AnimatedPattern />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHTML: Required for SEO JSON-LD schema */}
         <script
           type="application/ld+json"
           // JSON-LD for Organization structured data
@@ -100,7 +102,9 @@ export default function RootLayout({
             __html: JSON.stringify(organizationSchema),
           }}
         />
-        <div className="relative z-10">{children}</div>
+        <AuthProvider>
+          <div className="relative z-10">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );

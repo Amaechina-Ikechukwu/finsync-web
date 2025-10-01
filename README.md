@@ -32,6 +32,7 @@ The app reads `NEXT_PUBLIC_SITE_URL` for Open Graph image URLs and canonical lin
 
 ```
 NEXT_PUBLIC_SITE_URL=https://your-site.com
+NEXT_PUBLIC_API_URL=https://api.your-site.com
 ```
 
 Project structure (important files)
@@ -76,6 +77,50 @@ Contributing
 ------------
 
 This is primarily a static marketing site. Small changes to copy or styling can be made by editing files under `src/app` and `src/components`. Open a PR with the changes and ensure `pnpm build` completes.
+
+### Dashboard UI (Preview)
+
+The authenticated dashboard now uses a multi-page structure under `src/app/dashboard` with a shared layout and left navigation.
+
+Structure:
+
+- `src/app/dashboard/layout.tsx` – Wraps all dashboard pages, renders top bar & sidebar
+- `src/components/DashboardSidebar.tsx` – Reusable vertical nav (Overview, Utilities, Cards, Crypto, eSIM, Virtual Numbers)
+- `src/app/dashboard/page.tsx` – Overview (metrics, charts placeholders, activity feed)
+- `src/app/dashboard/utilities/page.tsx` – Operational tooling placeholders (KYC queue, fraud, limits, etc.)
+- `src/app/dashboard/cards/page.tsx` – Card issuance & spend metrics placeholders
+- `src/app/dashboard/crypto/page.tsx` – Crypto wallet & on/off-ramp metrics placeholders
+- `src/app/dashboard/esim/page.tsx` – eSIM provisioning & usage placeholders
+- `src/app/dashboard/virtual-numbers/page.tsx` – Programmable number & messaging placeholders
+- `src/components/UserBadge.tsx` – Re-usable avatar + name pill that fetches `/accounts/me` (requires `NEXT_PUBLIC_API_URL` and Firebase auth token)
+
+All pages currently contain static placeholder modules so you can progressively wire in API data.
+
+Core components:
+
+- `DashboardLeftMenu.tsx` – Sticky vertical navigation, active indicator bar, collapse pattern on mobile.
+- `StatCard.tsx` – Metric surface with delta & trend direction (▲ ▼ —).
+- `ChartPlaceholder.tsx` – Accessible placeholder blocks ready to be swapped for real charts (kept lightweight to avoid locking into a chart lib early).
+- `ActivityFeed.tsx` – Recent events list with relative timestamps.
+
+Layout regions:
+
+1. Left sidebar (navigation + footer copy)
+2. Top bar (welcome header, quick actions, sign out)
+3. Stats row (key KPIs)
+4. Charts grid (two responsive placeholders)
+5. Module detail panel (dynamic content based on selected module id)
+6. Secondary column (activity feed + next steps card)
+
+Customization tips:
+
+- Add real charts by replacing `ChartPlaceholder` with a client component importing e.g. `@tanstack/react-charts`, `recharts`, or `visx`.
+- Persist the selected module via `localStorage` or URL search params for shareable state.
+- Convert the activity feed to server data by hydrating from an API route or edge function.
+
+Legacy component:
+
+`DashboardSidePanel.tsx` is retained for reference but no longer used. Remove it when you are confident you won’t revert.
 
 License
 -------

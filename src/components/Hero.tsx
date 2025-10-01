@@ -19,7 +19,7 @@ export default function Hero() {
       </p>
       <div className="flex items-center gap-4">
         <Link
-          href="#get-started"
+          href="/auth/signin"
           className="inline-block cta-primary px-7 py-3 rounded-md text-sm font-medium tracking-wide shadow-sm hover:shadow transition-all"
         >
           Get Started
