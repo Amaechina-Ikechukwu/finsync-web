@@ -1,5 +1,6 @@
 "use client";
 import { useRecentTransactions } from "@/lib/apiClient";
+import Loader from "./Loader";
 import { formatCurrencyDetailed } from "@/lib/format";
 
 interface RecentTransactionsProps {
@@ -23,8 +24,8 @@ export default function RecentTransactions({
         {title}
       </h3>
       {loading && (
-        <div className="py-6 text-sm text-neutral-500">
-          Loading transactions...
+        <div className="py-4 flex items-center justify-center">
+          <Loader size={72} speed={1.6} message="Fetching" />
         </div>
       )}
       {error && <div className="py-6 text-sm text-red-600">Error: {error}</div>}

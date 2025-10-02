@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import Link from "next/link";
 import UserBadge from "@/components/UserBadge";
+import { ToastProvider } from "@/components/toast/ToastProvider";
 
 export default function DashboardLayout({
   children,
@@ -9,13 +10,15 @@ export default function DashboardLayout({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-[calc(100vh-0px)] w-full">
-      <DashboardSidebar />
-      <div className="flex flex-1 flex-col">
-        <TopBar />
-        <main className="flex-1 p-4 md:p-8 space-y-8">{children}</main>
+    <ToastProvider>
+      <div className="flex min-h-[calc(100vh-0px)] w-full">
+        <DashboardSidebar />
+        <div className="flex flex-1 flex-col">
+          <TopBar />
+          <main className="flex-1 p-4 md:p-8 space-y-8">{children}</main>
+        </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
 

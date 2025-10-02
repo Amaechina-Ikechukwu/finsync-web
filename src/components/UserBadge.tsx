@@ -1,5 +1,6 @@
 "use client";
 import { useCurrentUserProfile } from "@/lib/apiClient";
+import Loader from "./Loader";
 
 export interface UserBadgeProps {
   size?: "sm" | "md";
@@ -20,19 +21,8 @@ export default function UserBadge({
 
   if (loading) {
     return (
-      <div
-        className={`flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-1.5 ${className}`}
-      >
-        <div className="h-7 w-7 animate-pulse rounded-full bg-black/10" />
-        <div className="flex flex-col gap-1">
-          {Array.from({ length: skeletonLines }).map((_, i) => (
-            <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: predictable static skeleton list
-              key={i}
-              className={`block h-2.5 w-${i === 0 ? "24" : "16"} animate-pulse rounded bg-black/10`}
-            />
-          ))}
-        </div>
+      <div className={className}>
+        <Loader size={compact ? 48 : 64} speed={1.3} message={compact ? undefined : "Loading profile"} />
       </div>
     );
   }

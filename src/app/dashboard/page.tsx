@@ -1,7 +1,9 @@
 import StatCard from "@/components/StatCard";
+import UserCards from "@/components/UserCards";
 import ChartPlaceholder from "@/components/ChartPlaceholder";
 import RecentTransactions from "@/components/RecentTransactions";
 import ActivityFeed from "@/components/ActivityFeed";
+import NotificationList from "@/components/NotificationList";
 import AccountInfoCard from "@/components/AccountInfoCard";
 import TransactionSummaryStats from "@/components/TransactionSummaryStats";
 
@@ -17,34 +19,11 @@ export default function OverviewPage() {
           <div className="sm:col-span-2 lg:col-span-2">
             <AccountInfoCard />
           </div>
-          <StatCard
-            title="Active Cards"
-            value={128}
-            delta="+4%"
-            trend="up"
-            description="Physical & virtual cards currently active."
-          />
-          <StatCard
-            title="Crypto Wallets"
-            value={12}
-            delta="-1%"
-            trend="down"
-            description="Connected custodial wallets."
-          />
-          <StatCard
-            title="eSIM Profiles"
-            value={342}
-            delta="+12%"
-            trend="up"
-            description="Issued & active data profiles."
-          />
-          <StatCard
-            title="Virtual Numbers"
-            value={56}
-            delta="0%"
-            trend="flat"
-            description="Provisioned inbound numbers."
-          />
+          <div className="sm:col-span-2 lg:col-span-3">
+            <UserCards /> 
+          </div>
+         
+       
         </div>
         <div className="mt-8 space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-[0.26em] text-neutral-500">
@@ -56,10 +35,6 @@ export default function OverviewPage() {
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <RecentTransactions limit={5} />
-          <div className="grid gap-6 sm:grid-cols-2">
-            <ChartPlaceholder title="Crypto Portfolio" />
-            <ChartPlaceholder title="Inbound Messages" />
-          </div>
         </div>
         <div className="space-y-6">
           <ActivityFeed
@@ -82,6 +57,7 @@ export default function OverviewPage() {
               },
             ]}
           />
+          <NotificationList limit={6} pollIntervalMs={60000} />
           <div className="rounded-2xl border border-black/10 bg-white/70 p-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.26em] text-neutral-500">
               Next Steps

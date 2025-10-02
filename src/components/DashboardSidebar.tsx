@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUnreadNotificationCount } from "@/lib/apiClient";
 
 interface NavItem {
   href: string;
@@ -19,6 +20,7 @@ const navItems: NavItem[] = [
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
+  const { count } = useUnreadNotificationCount({ pollIntervalMs: 60000 });
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col gap-4 border-r border-black/10 bg-white/60 backdrop-blur-sm p-4">
       <div className="px-2 pt-2 pb-4">
@@ -40,6 +42,11 @@ export default function DashboardSidebar() {
               }`}
             >
               <span>{item.label}</span>
+              {item.href === "/dashboard" && count > 0 && (
+                <span className="ml-auto rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white group-hover:bg-indigo-500">
+                  {count}
+                </span>
+              )}
               {item.badge ? (
                 <span className="ml-auto rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-black group-hover:bg-black/20">
                   {item.badge}
