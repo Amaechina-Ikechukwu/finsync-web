@@ -1,5 +1,6 @@
 import StatCard from "@/components/StatCard";
 import ChartPlaceholder from "@/components/ChartPlaceholder";
+import RecentTransactions from "@/components/RecentTransactions";
 import ActivityFeed from "@/components/ActivityFeed";
 import AccountInfoCard from "@/components/AccountInfoCard";
 import TransactionSummaryStats from "@/components/TransactionSummaryStats";
@@ -12,7 +13,10 @@ export default function OverviewPage() {
           Overview
         </h2>
         {/* Primary stats row now includes AccountInfoCard for prominence */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="sm:col-span-2 lg:col-span-2">
+            <AccountInfoCard />
+          </div>
           <StatCard
             title="Active Cards"
             value={128}
@@ -41,7 +45,6 @@ export default function OverviewPage() {
             trend="flat"
             description="Provisioned inbound numbers."
           />
-          <AccountInfoCard />
         </div>
         <div className="mt-8 space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-[0.26em] text-neutral-500">
@@ -52,10 +55,7 @@ export default function OverviewPage() {
       </section>
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <ChartPlaceholder title="Spending by Category" />
-            <ChartPlaceholder title="Network Usage" />
-          </div>
+          <RecentTransactions limit={5} />
           <div className="grid gap-6 sm:grid-cols-2">
             <ChartPlaceholder title="Crypto Portfolio" />
             <ChartPlaceholder title="Inbound Messages" />
