@@ -94,6 +94,101 @@ export interface UnreadNotificationCountResponse {
   data: { count: number } | { data: { count: number } };
 }
 
+// Crypto (buy/sell) types
+export interface CryptoCoin {
+  id: string;
+  name: string;
+  symbol: string;
+  network: string;
+  icon?: string;
+  address: string;
+  current_price_naira: number;
+  available_balance: number;
+  decimals: number;
+  status: string;
+  [key: string]: unknown;
+}
+
+export interface CryptoCoinsResponse {
+  success: boolean;
+  coins: CryptoCoin[];
+  message?: string;
+}
+
+export interface CryptoSellEstimateRequest {
+  coinId: string;
+  cryptoAmount: string;
+}
+
+export interface CryptoBuyEnhancedRequest {
+  coinId: string;
+  amountInNaira: string;
+  userWalletAddress: string;
+}
+
+export interface CryptoSellEstimateResponse {
+  success: boolean;
+  coin: {
+    name: string;
+    symbol: string;
+    network: string;
+    icon?: string;
+    [key: string]: unknown;
+  };
+  crypto_amount: string;
+  current_rate: number;
+  gross_amount: number;
+  service_charge: number;
+  net_amount: number;
+  our_wallet_address: string;
+  minimum_amount: number;
+  note?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export interface CryptoSellAddressCoin {
+  id: string;
+  name: string;
+  symbol: string;
+  network: string;
+  icon?: string;
+  our_wallet_address: string;
+  current_rate_naira: number;
+  service_charge: number;
+  minimum_amount: number;
+  decimals: number;
+  [key: string]: unknown;
+}
+
+export interface CryptoSellAddressResponse {
+  success: boolean;
+  coin: CryptoSellAddressCoin;
+  message?: string;
+}
+
+export interface CryptoBuyEnhancedResponse {
+  success: boolean;
+  transaction_id: string;
+  coin: {
+    name: string;
+    symbol: string;
+    network: string;
+    icon?: string;
+    [key: string]: unknown;
+  };
+  amount_naira: number;
+  crypto_amount: number;
+  exchange_rate: number;
+  service_charge: number;
+  total_deducted: number;
+  user_wallet_address: string;
+  status: string;
+  message?: string;
+  estimated_delivery?: string;
+  [key: string]: unknown;
+}
+
 // Card details (dollar)
 export interface DollarCardDetails {
   id: number;
@@ -126,6 +221,145 @@ export interface DollarCardDetailsResponse {
   success: boolean;
   message?: string;
   data: DollarCardDetails | { data: DollarCardDetails };
+}
+
+// Dollar card balance
+export interface DollarCardBalance {
+  card_id: number;
+  available_balance: number;
+  ledger_balance: number;
+  currency: string; // "USD"
+  source: string; // e.g. upstream
+  updated_at: string; // ISO
+}
+
+export interface DollarCardBalanceResponse {
+  success: boolean;
+  data: DollarCardBalance | { data: DollarCardBalance };
+}
+
+// Strowallet customer update
+export interface UpdateStrowalletCustomerRequest {
+  phoneNumber?: string;
+  line1?: string;
+  city?: string;
+}
+
+export interface UpdateStrowalletCustomerResponse {
+  success: boolean;
+  data?:
+    | {
+        success?: boolean;
+        message?: string;
+        response?: {
+          customerId: string;
+          createdAt: string | null;
+          updatedAt: string | null;
+        };
+      }
+    | { data: unknown };
+  message?: string;
+}
+
+export interface CreateStrowalletCustomerRequest {
+  houseNumber: string;
+  firstName: string;
+  lastName: string;
+  idNumber: string;
+  customerEmail: string;
+  phoneNumber: string;
+  dateOfBirth: string; // ISO yyyy-mm-dd
+  idImage: string;
+  userPhoto: string;
+  line1: string;
+  state: string;
+  zipCode: string;
+  city: string;
+  country: string;
+  idType: string;
+}
+
+export interface CreateStrowalletCustomerData {
+  customerId?: string;
+  customerEmail?: string;
+  message?: string;
+  response?: {
+    customerId?: string;
+    customerEmail?: string;
+    [key: string]: unknown;
+  };
+  success?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CreateStrowalletCustomerResponse {
+  success: boolean;
+  data?: CreateStrowalletCustomerData;
+  message?: string;
+}
+
+export interface CreateDollarCardRequest {
+  customerEmail: string;
+  mode?: string;
+  customer_id?: string;
+  cardName?: string;
+}
+
+export interface CreateDollarCardData {
+  card_id?: string | number;
+  reference?: string;
+  message?: string;
+  response?: {
+    card_id?: string | number;
+    reference?: string | number;
+    customer_id?: string;
+    [key: string]: unknown;
+  };
+  success?: boolean;
+  [key: string]: unknown;
+}
+
+export interface CreateDollarCardResponse {
+  success: boolean;
+  data?: CreateDollarCardData;
+  message?: string;
+}
+
+export interface DollarCardFreezeStatus {
+  card_id: number;
+  status: string;
+  frozen: boolean;
+  source?: string;
+}
+
+export interface DollarCardFreezeStatusResponse {
+  success: boolean;
+  data: DollarCardFreezeStatus | { data: DollarCardFreezeStatus };
+  message?: string;
+}
+
+export interface DollarCardTransactionItem {
+  id: string;
+  amount: number;
+  card_id: string | number;
+  description?: string;
+  reference?: string;
+  savedAt?: string;
+  status?: string;
+  transaction_date?: string;
+  transaction_id?: string;
+  txId?: string;
+  type?: string;
+  flow?: string;
+  balance_after?: number;
+  [key: string]: unknown;
+}
+
+export interface DollarCardTransactionsResponse {
+  success: boolean;
+  message?: string;
+  data: DollarCardTransactionItem[] | { data: DollarCardTransactionItem[] };
+  total?: number;
 }
 
 // Card details (naira)
@@ -426,7 +660,9 @@ export async function fetchUnreadNotificationCount(
   if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
   const urlObj = new URL(`${API_BASE}/notifications/unread-count`);
   if (filters) {
-    Object.entries(filters).forEach(([k, v]) => { if (v) urlObj.searchParams.set(k, v); });
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v) urlObj.searchParams.set(k, v);
+    });
   }
   const res = await fetch(urlObj.toString(), {
     method: "GET",
@@ -450,6 +686,126 @@ export async function fetchUnreadNotificationCount(
   return inner.count;
 }
 
+// ==================== Crypto (Buy/Sell) ====================
+export async function fetchCryptoBuyCoins(
+  token: string,
+): Promise<CryptoCoin[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/crypto/buy/coins`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: CryptoCoinsResponse | null = null;
+  try {
+    json = JSON.parse(text) as CryptoCoinsResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message = json?.message || `Failed to load coins (${res.status})`;
+    throw new Error(message);
+  }
+  if (!Array.isArray(json.coins)) {
+    throw new Error("Invalid coins payload");
+  }
+  return json.coins;
+}
+
+export async function createCryptoBuyOrder(
+  token: string,
+  payload: CryptoBuyEnhancedRequest,
+): Promise<CryptoBuyEnhancedResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/crypto/buy/enhanced`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: CryptoBuyEnhancedResponse | null = null;
+  try {
+    json = JSON.parse(text) as CryptoBuyEnhancedResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message =
+      json?.message || `Failed to create buy order (${res.status})`;
+    throw new Error(message);
+  }
+  return json;
+}
+
+export async function fetchCryptoSellEstimate(
+  token: string,
+  payload: CryptoSellEstimateRequest,
+): Promise<CryptoSellEstimateResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/crypto/sell/estimate`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: CryptoSellEstimateResponse | null = null;
+  try {
+    json = JSON.parse(text) as CryptoSellEstimateResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message = json?.message || `Failed to estimate sell (${res.status})`;
+    throw new Error(message);
+  }
+  return json;
+}
+
+export async function fetchCryptoSellAddress(
+  token: string,
+  coinId: string,
+): Promise<CryptoSellAddressCoin> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(
+    `${API_BASE}/crypto/sell/address/${encodeURIComponent(coinId)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+  const text = await res.text();
+  let json: CryptoSellAddressResponse | null = null;
+  try {
+    json = JSON.parse(text) as CryptoSellAddressResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message = json?.message || `Failed to fetch address (${res.status})`;
+    throw new Error(message);
+  }
+  if (!json.coin) throw new Error("Missing coin address payload");
+  return json.coin;
+}
+
 // Fetch Dollar Card details
 export async function fetchDollarCardDetails(
   token: string,
@@ -465,16 +821,276 @@ export async function fetchDollarCardDetails(
   });
   if (!res.ok) {
     const text = await res.text();
-    if (
-      res.status === 400 &&
-      /No\s+dollar\s+card\s+found/i.test(text)
-    ) {
+    if (res.status === 400 && /No\s+dollar\s+card\s+found/i.test(text)) {
       return null;
     }
-    throw new Error(`Failed to fetch dollar card details (${res.status}): ${text}`);
+    throw new Error(
+      `Failed to fetch dollar card details (${res.status}): ${text}`,
+    );
   }
   const json = (await res.json()) as DollarCardDetailsResponse;
   return unwrapData<DollarCardDetails>(json.data);
+}
+
+// Update Strowallet customer profile
+export async function updateStrowalletCustomer(
+  token: string,
+  customerId: string,
+  payload: UpdateStrowalletCustomerRequest,
+  opts?: { email?: string },
+): Promise<UpdateStrowalletCustomerResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = new URL(
+    `${API_BASE}/strowallet/customer/${encodeURIComponent(customerId)}`,
+  );
+  if (opts?.email) url.searchParams.set("email", opts.email);
+  const res = await fetch(url.toString(), {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    let msg = `Failed to update customer (${res.status})`;
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      msg = j.message || j.error || msg;
+    } catch {
+      /* ignore */
+    }
+    throw new Error(msg);
+  }
+  try {
+    return JSON.parse(text) as UpdateStrowalletCustomerResponse;
+  } catch {
+    // In case backend returns minimal/no body
+    return { success: true } as UpdateStrowalletCustomerResponse;
+  }
+}
+
+// Create Strowallet customer profile (assumes POST endpoint mirrors update schema)
+export async function createStrowalletCustomer(
+  token: string,
+  payload: CreateStrowalletCustomerRequest,
+): Promise<CreateStrowalletCustomerResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/strowallet/customer`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      throw new Error(
+        j.message || j.error || `Failed to create customer (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to create customer (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  try {
+    const raw = JSON.parse(text) as CreateStrowalletCustomerResponse & {
+      data?: unknown;
+    };
+    const data = raw.data
+      ? unwrapData<CreateStrowalletCustomerData>(raw.data)
+      : undefined;
+    return { ...raw, data };
+  } catch {
+    return { success: true } as CreateStrowalletCustomerResponse;
+  }
+}
+
+// Create USD card for an existing customer
+export async function createDollarCard(
+  token: string,
+  payload: CreateDollarCardRequest,
+): Promise<CreateDollarCardResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/dollar-card/create`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      throw new Error(
+        j.message || j.error || `Failed to create dollar card (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to create dollar card (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  try {
+    const raw = JSON.parse(text) as CreateDollarCardResponse & {
+      data?: unknown;
+    };
+    const data = raw.data
+      ? unwrapData<CreateDollarCardData>(raw.data)
+      : undefined;
+    return { ...raw, data };
+  } catch {
+    return { success: true } as CreateDollarCardResponse;
+  }
+}
+
+// Get Dollar card fund estimate (quote)
+export async function getDollarFundEstimate(
+  token: string,
+  amount: number,
+): Promise<unknown | null> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/dollar-card/fund/quote`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ amount }),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string; error?: string };
+      throw new Error(j.message || j.error || `Quote failed (${res.status})`);
+    } catch {
+      throw new Error(`Quote failed (${res.status}): ${text.slice(0, 120)}`);
+    }
+  }
+  if (!text) return null; // no body response per docs
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+// Get Dollar card balance
+export async function fetchDollarCardBalance(
+  token: string,
+): Promise<DollarCardBalance> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/dollar-card/balance`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch dollar balance (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch dollar balance (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as DollarCardBalanceResponse;
+  return unwrapData<DollarCardBalance>(json.data);
+}
+
+// Fetch freeze status for USD card
+export async function fetchDollarCardFreezeStatus(
+  token: string,
+): Promise<DollarCardFreezeStatus> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/dollar-card/freeze-status`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch freeze status (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch freeze status (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as DollarCardFreezeStatusResponse;
+  return unwrapData<DollarCardFreezeStatus>(json.data);
+}
+
+// Fetch USD card ledger transactions (database sourced)
+export async function fetchDollarCardTransactions(
+  token: string,
+  params: { limit?: number; offset?: number; sort?: "asc" | "desc" } = {},
+): Promise<{ items: DollarCardTransactionItem[]; total?: number }> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = new URL(`${API_BASE}/dollar-card/transactions/db`);
+  if (params.limit !== undefined)
+    url.searchParams.set("limit", String(params.limit));
+  if (params.offset !== undefined)
+    url.searchParams.set("offset", String(params.offset));
+  if (params.sort) url.searchParams.set("sort", params.sort);
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch card transactions (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch card transactions (${res.status}): ${text.slice(0, 200)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as DollarCardTransactionsResponse;
+  const itemsRaw = unwrapData<
+    DollarCardTransactionItem[] | { data: DollarCardTransactionItem[] }
+  >(json.data);
+  const items = Array.isArray(itemsRaw)
+    ? itemsRaw
+    : unwrapData<DollarCardTransactionItem[]>(itemsRaw);
+  return { items, total: json.total };
 }
 
 // Fetch Naira Card details
@@ -495,7 +1111,9 @@ export async function fetchNairaCardDetails(
     if (res.status === 400 && /No\s+naira\s+card\s+found/i.test(text)) {
       return null;
     }
-    throw new Error(`Failed to fetch naira card details (${res.status}): ${text}`);
+    throw new Error(
+      `Failed to fetch naira card details (${res.status}): ${text}`,
+    );
   }
   const json = (await res.json()) as NairaCardDetailsResponse;
   return unwrapData<NairaCardDetails>(json.data);
@@ -553,7 +1171,9 @@ export async function buyAirtime(
     // Try to parse json error shape if possible
     try {
       const j = JSON.parse(text) as { message?: string; error?: string };
-      throw new Error(j.message || j.error || `Airtime purchase failed (${res.status})`);
+      throw new Error(
+        j.message || j.error || `Airtime purchase failed (${res.status})`,
+      );
     } catch {
       throw new Error(`Airtime purchase failed (${res.status}): ${text}`);
     }
@@ -588,7 +1208,7 @@ export async function buyElectricity(
   }
   if (!res.ok || !json || json.success === false) {
     // Attempt structured error message
-    if (json && json.message) {
+    if (json?.message) {
       const parts: string[] = [json.message];
       if (json.required_amount !== undefined) {
         parts.push(
@@ -601,7 +1221,8 @@ export async function buyElectricity(
       `Electricity purchase failed (${res.status}): ${text.slice(0, 200)}`,
     );
   }
-  const unwrapped = unwrapData<BuyElectricitySuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  const unwrapped = unwrapData<BuyElectricitySuccessData>(json.data);
   return unwrapped;
 }
 
@@ -623,12 +1244,17 @@ export async function verifyElectricMeter(
   });
   const text = await res.text();
   let json: VerifyElectricityResponse | null = null;
-  try { json = JSON.parse(text) as VerifyElectricityResponse; } catch { /* ignore */ }
+  try {
+    json = JSON.parse(text) as VerifyElectricityResponse;
+  } catch {
+    /* ignore */
+  }
   if (!res.ok || !json || json.success === false) {
     const msg = json?.message || `Verification failed (${res.status})`;
     throw new Error(msg);
   }
-  return unwrapData<VerifyElectricitySuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  return unwrapData<VerifyElectricitySuccessData>(json.data);
 }
 
 // Fetch cable variations (plans) for a given service_id (e.g. gotv, dstv)
@@ -638,8 +1264,11 @@ export async function fetchCableVariations(
   extra?: { customer_id?: string }, // backend example shows body with customer_id although GET
 ): Promise<CableVariationItem[]> {
   if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
-  const urlObj = new URL(`${API_BASE}/cable/variations/${encodeURIComponent(service_id)}`);
-  if (extra?.customer_id) urlObj.searchParams.set("customer_id", extra.customer_id);
+  const urlObj = new URL(
+    `${API_BASE}/cable/variations/${encodeURIComponent(service_id)}`,
+  );
+  if (extra?.customer_id)
+    urlObj.searchParams.set("customer_id", extra.customer_id);
   const res = await fetch(urlObj.toString(), {
     method: "GET",
     headers: {
@@ -653,14 +1282,24 @@ export async function fetchCableVariations(
     // attempt JSON message
     try {
       const j = JSON.parse(text) as { message?: string };
-      throw new Error(j.message || `Failed to fetch cable variations (${res.status})`);
+      throw new Error(
+        j.message || `Failed to fetch cable variations (${res.status})`,
+      );
     } catch {
-      throw new Error(`Failed to fetch cable variations (${res.status}): ${text.slice(0, 120)}`);
+      throw new Error(
+        `Failed to fetch cable variations (${res.status}): ${text.slice(0, 120)}`,
+      );
     }
   }
   let json: CableVariationsResponse;
-  try { json = JSON.parse(text) as CableVariationsResponse; } catch { throw new Error("Invalid variations JSON"); }
-  const unwrapped = unwrapData<CableVariationItem[] | { data: CableVariationItem[] }>(json.data);
+  try {
+    json = JSON.parse(text) as CableVariationsResponse;
+  } catch {
+    throw new Error("Invalid variations JSON");
+  }
+  const unwrapped = unwrapData<
+    CableVariationItem[] | { data: CableVariationItem[] }
+  >(json.data);
   if (Array.isArray(unwrapped)) return unwrapped;
   return unwrapData<CableVariationItem[]>(unwrapped);
 }
@@ -683,12 +1322,17 @@ export async function subscribeCable(
   });
   const text = await res.text();
   let json: SubscribeCableResponse | null = null;
-  try { json = JSON.parse(text) as SubscribeCableResponse; } catch { /* ignore */ }
+  try {
+    json = JSON.parse(text) as SubscribeCableResponse;
+  } catch {
+    /* ignore */
+  }
   if (!res.ok || !json || json.success === false) {
     const msg = json?.message || `Cable subscription failed (${res.status})`;
-    throw new Error(msg.replace(/&#x20a6;/g, 'NGN ')); // decode naira symbol entity if present
+    throw new Error(msg.replace(/&#x20a6;/g, "NGN ")); // decode naira symbol entity if present
   }
-  return unwrapData<SubscribeCableSuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  return unwrapData<SubscribeCableSuccessData>(json.data);
 }
 
 // Verify cable customer (smartcard/IUC) before subscription
@@ -727,12 +1371,17 @@ export async function verifyCableCustomer(
   });
   const text = await res.text();
   let json: VerifyCableResponse | null = null;
-  try { json = JSON.parse(text) as VerifyCableResponse; } catch { /* ignore */ }
+  try {
+    json = JSON.parse(text) as VerifyCableResponse;
+  } catch {
+    /* ignore */
+  }
   if (!res.ok || !json || json.success === false) {
     const msg = json?.message || `Cable verification failed (${res.status})`;
     throw new Error(msg);
   }
-  return unwrapData<VerifyCableSuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  return unwrapData<VerifyCableSuccessData>(json.data);
 }
 
 // ==================== Betting (Fund / Verify) ====================
@@ -752,7 +1401,9 @@ export interface VerifyBettingCustomerSuccessData {
 export interface VerifyBettingCustomerResponse {
   success: boolean;
   message: string;
-  data?: VerifyBettingCustomerSuccessData | { data: VerifyBettingCustomerSuccessData };
+  data?:
+    | VerifyBettingCustomerSuccessData
+    | { data: VerifyBettingCustomerSuccessData };
 }
 
 export async function verifyBettingCustomer(
@@ -772,15 +1423,22 @@ export async function verifyBettingCustomer(
   });
   const text = await res.text();
   let json: VerifyBettingCustomerResponse | null = null;
-  try { json = JSON.parse(text) as VerifyBettingCustomerResponse; } catch { /* ignore parse error */ }
+  try {
+    json = JSON.parse(text) as VerifyBettingCustomerResponse;
+  } catch {
+    /* ignore parse error */
+  }
   if (!res.ok || !json || json.success === false) {
-    const msg = json?.message || `Could not verify betting customer (${res.status})`;
+    const msg =
+      json?.message || `Could not verify betting customer (${res.status})`;
     throw new Error(msg);
   }
-  return unwrapData<VerifyBettingCustomerSuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  return unwrapData<VerifyBettingCustomerSuccessData>(json.data);
 }
 
-export interface FundBettingAccountRequest extends VerifyBettingCustomerRequest {
+export interface FundBettingAccountRequest
+  extends VerifyBettingCustomerRequest {
   amount: string | number; // backend example shows string; accept number too
 }
 
@@ -799,7 +1457,9 @@ export interface FundBettingAccountSuccessData {
 export interface FundBettingAccountResponse {
   success: boolean;
   message: string;
-  data?: FundBettingAccountSuccessData | { data: FundBettingAccountSuccessData };
+  data?:
+    | FundBettingAccountSuccessData
+    | { data: FundBettingAccountSuccessData };
 }
 
 export async function fundBettingAccount(
@@ -819,12 +1479,17 @@ export async function fundBettingAccount(
   });
   const text = await res.text();
   let json: FundBettingAccountResponse | null = null;
-  try { json = JSON.parse(text) as FundBettingAccountResponse; } catch { /* ignore */ }
+  try {
+    json = JSON.parse(text) as FundBettingAccountResponse;
+  } catch {
+    /* ignore */
+  }
   if (!res.ok || !json || json.success === false) {
     const msg = json?.message || `Betting funding failed (${res.status})`;
     throw new Error(msg);
   }
-  return unwrapData<FundBettingAccountSuccessData>(json.data!);
+  if (!json.data) throw new Error("Missing response data");
+  return unwrapData<FundBettingAccountSuccessData>(json.data);
 }
 
 // Small client hook to load current user profile once authenticated.
@@ -990,6 +1655,39 @@ export function useUnreadNotificationCount({
   return { count, loading, error };
 }
 
+// Hook: Crypto coins
+export function useCryptoCoins() {
+  const { getIdToken, user } = useAuth();
+  const [coins, setCoins] = useState<CryptoCoin[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("No auth token available");
+        const items = await fetchCryptoBuyCoins(token);
+        if (!cancelled) setCoins(items);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, getIdToken]);
+
+  return { coins, loading, error };
+}
+
 // Hook: Dollar card details
 export function useDollarCardDetails() {
   const { getIdToken, user } = useAuth();
@@ -1006,8 +1704,8 @@ export function useDollarCardDetails() {
       try {
         const token = await getIdToken();
         if (!token) throw new Error("No auth token available");
-  const data = await fetchDollarCardDetails(token);
-  if (!cancelled) setCard(data || null);
+        const data = await fetchDollarCardDetails(token);
+        if (!cancelled) setCard(data || null);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       } finally {
@@ -1015,10 +1713,45 @@ export function useDollarCardDetails() {
       }
     };
     void run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, getIdToken]);
 
   return { card, loading, error };
+}
+
+// Hook: Dollar card balance
+export function useDollarCardBalance() {
+  const { getIdToken, user } = useAuth();
+  const [balance, setBalance] = useState<DollarCardBalance | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const token = await getIdToken();
+        if (!token) throw new Error("No auth token available");
+        const data = await fetchDollarCardBalance(token);
+        if (!cancelled) setBalance(data);
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, getIdToken]);
+
+  return { balance, loading, error };
 }
 
 // Hook: Naira card details
@@ -1037,8 +1770,8 @@ export function useNairaCardDetails() {
       try {
         const token = await getIdToken();
         if (!token) throw new Error("No auth token available");
-  const data = await fetchNairaCardDetails(token);
-  if (!cancelled) setCard(data || null);
+        const data = await fetchNairaCardDetails(token);
+        if (!cancelled) setCard(data || null);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
       } finally {
@@ -1046,7 +1779,9 @@ export function useNairaCardDetails() {
       }
     };
     void run();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, getIdToken]);
 
   return { card, loading, error };
