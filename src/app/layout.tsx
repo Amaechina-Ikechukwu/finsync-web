@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AnimatedPattern from "@/components/AnimatedPattern";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/components/toast/ToastProvider";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
 
@@ -103,7 +104,9 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-          <div className="relative z-10">{children}</div>
+          <ToastProvider>
+            <div className="relative z-10">{children}</div>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

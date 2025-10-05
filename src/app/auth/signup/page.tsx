@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { sendEmailVerification } from "firebase/auth";
 import type { FormEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -56,13 +57,28 @@ export default function SignUpPage() {
     setIsSubmitting(true);
 
     try {
-      await signUp({ email, password });
-      setSuccess("Nice! Your account is alive and ready.");
+      const createdUser = await signUp({ email, password });
+
+      // send email verification
+      try {
+        await sendEmailVerification(createdUser);
+        setSuccess(
+          "Nice! We've sent a verification email — please check your inbox.",
+        );
+      } catch (emailErr) {
+        // non-blocking: still proceed to BVN page but show a message
+        setSuccess(
+          "Account created. Please verify your email (email not sent).",
+        );
+        console.error("Failed to send verification email", emailErr);
+      }
+
       setEmail("");
       setPassword("");
       setConfirmPassword("");
+
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push("/auth/bvn");
       }, 850);
     } catch (err) {
       const message =
@@ -145,7 +161,7 @@ export default function SignUpPage() {
                 Let’s get you signed up
               </h2>
               <p className="text-sm leading-relaxed text-neutral-600">
-                Use your company email so we can fast-track provisioning.
+                Use your email to create your account.
               </p>
             </header>
 
@@ -155,7 +171,7 @@ export default function SignUpPage() {
                   htmlFor="email"
                   className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500"
                 >
-                  Work email
+                  Email address
                 </label>
                 <input
                   id="email"
@@ -164,7 +180,7 @@ export default function SignUpPage() {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="finance@yourcompany.com"
+                  placeholder="you@example.com"
                   className={inputClasses}
                 />
               </div>
@@ -247,7 +263,7 @@ export default function SignUpPage() {
                 disabled={isSubmitting}
                 className="group flex w-full items-center justify-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-semibold tracking-wide text-white transition hover:bg-black/90 disabled:cursor-not-allowed disabled:bg-black/60"
               >
-                {isSubmitting ? "Creating your seat…" : "Create account"}
+                {isSubmitting ? "Creating account..." : "Create account"}
                 <svg
                   className="h-4 w-4 transition group-hover:translate-x-0.5"
                   viewBox="0 0 20 20"

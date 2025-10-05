@@ -1492,6 +1492,661 @@ export async function fundBettingAccount(
   return unwrapData<FundBettingAccountSuccessData>(json.data);
 }
 
+// ==================== eSIM (Airalo) ====================
+// Note: Endpoints are assumed based on provided spec: may evolve as backend stabilizes.
+export interface EsimPurchaseItem {
+  id: string | number;
+  status?: string; // e.g., active, pending, expired
+  country_code?: string;
+  country?: string;
+  operator_id?: string | number;
+  operator?: string;
+  package_id?: string | number;
+  package_name?: string;
+  iccid?: string;
+  activation_code?: string;
+  qr_code_url?: string;
+  created_at?: string;
+  expires_at?: string;
+  [key: string]: unknown;
+}
+
+export interface EsimUserPurchasesResponse {
+  success: boolean;
+  data: EsimPurchaseItem[] | { data: EsimPurchaseItem[] };
+  message?: string;
+}
+
+export interface EsimCountryItem {
+  // Normalized fields (for UI convenience)
+  code?: string; // ISO-2 or slug fallback
+  name?: string; // display name
+  emoji?: string; // optional flag
+  operators_count?: number;
+
+  // Raw fields from backend response
+  slug?: string;
+  country_code?: string; // e.g., "NG"
+  title?: string; // e.g., "Nigeria"
+  image?: { width: number; height: number; url: string };
+  [key: string]: unknown;
+}
+
+export interface EsimCountriesResponse {
+  success: boolean;
+  data: EsimCountryItem[] | { data: EsimCountryItem[] };
+  message?: string;
+}
+
+export interface EsimOperatorItem {
+  id: string | number;
+  name: string;
+  country_code: string;
+  logo_url?: string;
+  image?: { width: number; height: number; url: string };
+  packages_count?: number;
+  [key: string]: unknown;
+}
+
+export interface EsimOperatorsResponse {
+  success: boolean;
+  data: EsimOperatorItem[] | { data: EsimOperatorItem[] };
+  message?: string;
+}
+
+export interface EsimPackageItem {
+  id: string | number;
+  name: string;
+  data_amount?: string; // e.g. "3 GB"
+  validity_days?: number; // e.g. 7
+  price?: number;
+  currency?: string; // e.g. USD, NGN
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface EsimPackagesResponse {
+  success: boolean;
+  data: EsimPackageItem[] | { data: EsimPackageItem[] };
+  message?: string;
+}
+
+export interface PurchaseEsimRequest {
+  packageId: string | number;
+  // Optional contact info or extras if backend requires
+  email?: string;
+  phone?: string;
+  operatorId?: string | number;
+}
+
+export interface PurchaseEsimResponse {
+  success: boolean;
+  message?: string;
+  data?: EsimPurchaseItem | { data: EsimPurchaseItem };
+}
+
+export async function fetchEsimUserPurchases(
+  token: string,
+): Promise<EsimPurchaseItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/airalo/user-purchases`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch eSIM purchases (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch eSIM purchases (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as EsimUserPurchasesResponse;
+  const unwrapped = unwrapData<
+    EsimPurchaseItem[] | { data: EsimPurchaseItem[] }
+  >(json.data);
+  return Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<EsimPurchaseItem[]>(unwrapped);
+}
+
+export async function fetchEsimCountries(
+  token: string,
+  opts?: { uid?: string },
+): Promise<EsimCountryItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = new URL(`${API_BASE}/airalo/countries`);
+  if (opts?.uid) url.searchParams.set("uid", opts.uid);
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch eSIM countries (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch eSIM countries (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as EsimCountriesResponse;
+  const unwrapped = unwrapData<EsimCountryItem[] | { data: EsimCountryItem[] }>(
+    json.data,
+  );
+  const items = Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<EsimCountryItem[]>(unwrapped);
+  // Normalize fields so UI can rely on code/name while preserving originals
+  return items.map((it) => ({
+    ...it,
+    code: it.code ?? it.country_code ?? it.slug,
+    name: it.name ?? it.title,
+  }));
+}
+
+export async function fetchEsimOperators(
+  token: string,
+  countryCode: string,
+  opts?: { uid?: string },
+): Promise<EsimOperatorItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = new URL(
+    `${API_BASE}/airalo/countries/${encodeURIComponent(countryCode)}/operators`,
+  );
+  if (opts?.uid) url.searchParams.set("uid", opts.uid);
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(j.message || `Failed to fetch operators (${res.status})`);
+    } catch {
+      throw new Error(
+        `Failed to fetch operators (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as EsimOperatorsResponse;
+  const unwrapped = unwrapData<
+    EsimOperatorItem[] | { data: EsimOperatorItem[] }
+  >(json.data);
+  const items = Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<EsimOperatorItem[]>(unwrapped);
+  // Normalize fields so UI can rely on name/country_code
+  return items.map((raw) => {
+    const r = raw as unknown as Record<string, unknown>;
+    const name =
+      (r["name"] as string | undefined) ??
+      (r["title"] as string | undefined) ??
+      "";
+    const country_code =
+      (r["country_code"] as string | undefined) ??
+      (r["country"] as { country_code?: string } | undefined)?.country_code ??
+      (r["countryCode"] as string | undefined) ??
+      "";
+    const imageFromImage = r["image"] as
+      | { width?: number; height?: number; url?: string }
+      | undefined;
+    const imageFromLogo = r["logo"] as
+      | { width?: number; height?: number; url?: string }
+      | undefined;
+    const normalizedImage = imageFromImage?.url
+      ? {
+          width: imageFromImage.width ?? 0,
+          height: imageFromImage.height ?? 0,
+          url: String(imageFromImage.url),
+        }
+      : imageFromLogo?.url
+        ? {
+            width: imageFromLogo.width ?? 0,
+            height: imageFromLogo.height ?? 0,
+            url: String(imageFromLogo.url),
+          }
+        : undefined;
+    const logo_url =
+      (r["logo_url"] as string | undefined) ??
+      imageFromImage?.url ??
+      imageFromLogo?.url;
+    const packages_count =
+      (r["packages_count"] as number | undefined) ??
+      (r["packagesCount"] as number | undefined);
+    const id = (r["id"] as string | number | undefined) ?? "";
+    const op: EsimOperatorItem = {
+      id,
+      name,
+      country_code,
+      logo_url,
+      image: normalizedImage,
+      packages_count,
+    };
+    return op;
+  });
+}
+
+export async function fetchEsimPackages(
+  token: string,
+  countryCode: string,
+  operatorId: string | number,
+  opts?: { uid?: string },
+): Promise<EsimPackageItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const url = new URL(
+    `${API_BASE}/airalo/countries/${encodeURIComponent(
+      countryCode,
+    )}/operators/${encodeURIComponent(String(operatorId))}/packages`,
+  );
+  if (opts?.uid) url.searchParams.set("uid", opts.uid);
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(j.message || `Failed to fetch packages (${res.status})`);
+    } catch {
+      throw new Error(
+        `Failed to fetch packages (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as EsimPackagesResponse;
+  const unwrapped = unwrapData<EsimPackageItem[] | { data: EsimPackageItem[] }>(
+    json.data,
+  );
+  const items = Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<EsimPackageItem[]>(unwrapped);
+  // Normalize fields for UI (name, data_amount, validity_days, price, currency)
+  return items.map((raw) => {
+    const it = raw as unknown as {
+      id: string | number;
+      name?: string;
+      title?: string;
+      data_amount?: string;
+      data?: string | number;
+      amount?: string | number;
+      validity_days?: number;
+      day?: number;
+      price?: number;
+      net_price?: number;
+      price_ngn?: number;
+      net_price_ngn?: number;
+      currency?: string;
+    };
+    const priceNgn = it.price_ngn ?? it.net_price_ngn;
+    const priceUsd = it.price ?? it.net_price;
+    const currency = priceNgn !== undefined ? "NGN" : (it.currency ?? "USD");
+    const price = priceNgn !== undefined ? priceNgn : priceUsd;
+    const dataAmount =
+      it.data_amount ??
+      (it.data ? String(it.data) : it.amount ? `${it.amount} MB` : undefined);
+    const validity = it.validity_days ?? it.day;
+    return {
+      ...(raw as EsimPackageItem),
+      name: it.name ?? it.title ?? "",
+      data_amount: dataAmount,
+      validity_days: validity,
+      price,
+      currency,
+    } as EsimPackageItem;
+  });
+}
+
+export async function purchaseEsim(
+  token: string,
+  payload: PurchaseEsimRequest,
+): Promise<EsimPurchaseItem> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/airalo/purchase`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: PurchaseEsimResponse | null = null;
+  try {
+    json = JSON.parse(text) as PurchaseEsimResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const msg = json?.message || `eSIM purchase failed (${res.status})`;
+    throw new Error(msg);
+  }
+  if (!json.data) throw new Error("Missing eSIM purchase data");
+  return unwrapData<EsimPurchaseItem>(json.data);
+}
+
+// ==================== Virtual Numbers (Pricing, Purchases, SMS) ====================
+export interface VirtualNumberCountryItem {
+  iso: string; // e.g., "nigeria", "usa"
+  text_en: string; // e.g., "Nigeria"
+  // Normalized for UI
+  code?: string;
+  name?: string;
+}
+
+export interface VirtualNumberProductAvailability {
+  cost: number;
+  count: number;
+  rate?: number;
+  [key: string]: unknown;
+}
+
+export interface VirtualNumberPricesMap {
+  // product -> operator -> availability
+  [product: string]: {
+    [operator: string]: VirtualNumberProductAvailability;
+  };
+}
+
+export interface VirtualNumberProductEntry {
+  product: string;
+  offers: Array<{
+    operator: string;
+    cost: number;
+    count: number;
+    rate?: number;
+  }>;
+}
+
+export interface VirtualNumberCountriesResponse {
+  success: boolean;
+  data: VirtualNumberCountryItem[] | { data: VirtualNumberCountryItem[] };
+}
+
+export interface VirtualNumberPricesResponse {
+  success: boolean;
+  data: VirtualNumberPricesMap | { data: VirtualNumberPricesMap };
+}
+
+export interface VirtualNumberPurchaseItem {
+  activationId: number;
+  id?: number; // may duplicate activationId
+  purchaseId?: string;
+  product?: string;
+  operator?: string;
+  country?: string; // slug e.g., nigeria
+  phone?: string; // "+234..."
+  price?: number;
+  status?: string; // RECEIVED, PENDING
+  type?: string; // purchase
+  createdAt?: string;
+  created_at?: string;
+  expires?: string;
+  [key: string]: unknown;
+}
+
+export interface VirtualNumberPurchasesResponse {
+  success: boolean;
+  data: VirtualNumberPurchaseItem[] | { data: VirtualNumberPurchaseItem[] };
+  count?: number;
+}
+
+export interface VirtualNumberSmsMessage {
+  created_at?: string;
+  date?: string;
+  sender?: string;
+  text?: string;
+  code?: string | null;
+  [key: string]: unknown;
+}
+
+export interface VirtualNumberSmsResponse {
+  success: boolean;
+  data:
+    | { sms: VirtualNumberSmsMessage[] }
+    | { data: { sms: VirtualNumberSmsMessage[] } };
+}
+
+export async function fetchVirtualNumberCountries(
+  token: string,
+): Promise<VirtualNumberCountryItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/virtual-numbers/countries`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch VN countries (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch VN countries (${res.status}): ${text.slice(0, 160)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as VirtualNumberCountriesResponse;
+  const unwrapped = unwrapData<
+    VirtualNumberCountryItem[] | { data: VirtualNumberCountryItem[] }
+  >(json.data);
+  const arr = Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<VirtualNumberCountryItem[]>(unwrapped);
+  return arr.map((c) => ({ ...c, code: c.iso, name: c.text_en }));
+}
+
+export async function fetchVirtualNumberPrices(
+  token: string,
+  country: string,
+): Promise<VirtualNumberProductEntry[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(
+    `${API_BASE}/virtual-numbers/prices/${encodeURIComponent(country)}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(j.message || `Failed to fetch VN prices (${res.status})`);
+    } catch {
+      throw new Error(
+        `Failed to fetch VN prices (${res.status}): ${text.slice(0, 200)}`,
+      );
+    }
+  }
+  const raw = JSON.parse(text) as VirtualNumberPricesResponse;
+  const mapObj = unwrapData<
+    VirtualNumberPricesMap | { data: VirtualNumberPricesMap }
+  >(raw.data) as VirtualNumberPricesMap;
+  const entries: VirtualNumberProductEntry[] = Object.entries(mapObj || {}).map(
+    ([product, byOperator]) => ({
+      product,
+      offers: Object.entries(byOperator || {}).map(([operator, info]) => ({
+        operator,
+        cost: Number((info as VirtualNumberProductAvailability).cost ?? 0),
+        count: Number((info as VirtualNumberProductAvailability).count ?? 0),
+        rate: (info as VirtualNumberProductAvailability).rate,
+      })),
+    }),
+  );
+  // Sort offers by cost asc for each product
+  entries.forEach((e) => {
+    e.offers.sort((a, b) => a.cost - b.cost);
+  });
+  return entries;
+}
+
+export async function fetchVirtualNumberPurchases(
+  token: string,
+): Promise<VirtualNumberPurchaseItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const doFetch = async (path: string) =>
+    fetch(`${API_BASE}${path}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  let res = await doFetch("/virtual-numbers/purchases");
+  if (!res.ok && res.status === 404) {
+    // try alternate path per examples
+    res = await doFetch("/virtual-numbers/history");
+  }
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(
+        j.message || `Failed to fetch VN purchases (${res.status})`,
+      );
+    } catch {
+      throw new Error(
+        `Failed to fetch VN purchases (${res.status}): ${text.slice(0, 200)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as VirtualNumberPurchasesResponse;
+  const unwrapped = unwrapData<
+    VirtualNumberPurchaseItem[] | { data: VirtualNumberPurchaseItem[] }
+  >(json.data);
+  return Array.isArray(unwrapped)
+    ? unwrapped
+    : unwrapData<VirtualNumberPurchaseItem[]>(unwrapped);
+}
+
+export async function fetchVirtualNumberSms(
+  token: string,
+  activationId: string | number,
+): Promise<VirtualNumberSmsMessage[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(
+    `${API_BASE}/virtual-numbers/sms/${encodeURIComponent(String(activationId))}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const j = JSON.parse(text) as { message?: string };
+      throw new Error(j.message || `Failed to fetch SMS (${res.status})`);
+    } catch {
+      throw new Error(
+        `Failed to fetch SMS (${res.status}): ${text.slice(0, 200)}`,
+      );
+    }
+  }
+  const json = JSON.parse(text) as VirtualNumberSmsResponse;
+  const container = unwrapData<
+    | { sms: VirtualNumberSmsMessage[] }
+    | { data: { sms: VirtualNumberSmsMessage[] } }
+  >(json.data) as { sms: VirtualNumberSmsMessage[] };
+  const smsArr = Array.isArray(container.sms) ? container.sms : [];
+  // Sort newest first by date/created_at
+  smsArr.sort((a, b) => {
+    const ad = Date.parse(a.date || a.created_at || "");
+    const bd = Date.parse(b.date || b.created_at || "");
+    const safeAd = Number.isNaN(ad) ? 0 : ad;
+    const safeBd = Number.isNaN(bd) ? 0 : bd;
+    return safeBd - safeAd;
+  });
+  return smsArr;
+}
+
+// Purchase virtual number
+export interface PurchaseVirtualNumberRequest {
+  country: string; // slug e.g., "nigeria"
+  operator: string; // e.g., "virtual2"
+  product: string; // e.g., "amazon"
+}
+
+export interface PurchaseVirtualNumberResponse {
+  success: boolean;
+  data?: VirtualNumberPurchaseItem | { data: VirtualNumberPurchaseItem };
+  message?: string;
+}
+
+export async function purchaseVirtualNumber(
+  token: string,
+  payload: PurchaseVirtualNumberRequest,
+): Promise<VirtualNumberPurchaseItem> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/virtual-numbers/buy`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: PurchaseVirtualNumberResponse | null = null;
+  try {
+    json = JSON.parse(text) as PurchaseVirtualNumberResponse;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const msg = json?.message || `Purchase failed (${res.status})`;
+    throw new Error(msg);
+  }
+  if (!json.data) throw new Error("Missing purchase data");
+  return unwrapData<VirtualNumberPurchaseItem>(json.data);
+}
+
 // Small client hook to load current user profile once authenticated.
 export function useCurrentUserProfile() {
   const { getIdToken, user } = useAuth();
