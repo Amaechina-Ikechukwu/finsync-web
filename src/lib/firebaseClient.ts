@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, type Auth } from "firebase/auth";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -21,11 +21,18 @@ const requiredConfig: Record<string, string | undefined> = {
   appId: firebaseConfig.appId,
 };
 
-function assertConfig(config: Record<string, string | undefined>) {
-  const missingKeys = Object.entries(config)
+const isBrowser = typeof window !== "undefined";
+
+function getMissingEnvKeys(config: Record<string, string | undefined>) {
+  return Object.entries(config)
     .filter(([, value]) => !value)
     .map(([key]) => key);
+}
 
+function assertClientEnvIfBrowser(config: Record<string, string | undefined>) {
+  // Only enforce env presence in the browser at runtime to avoid breaking SSR/prerender.
+  if (!isBrowser) return;
+  const missingKeys = getMissingEnvKeys(config);
   if (missingKeys.length > 0) {
     throw new Error(
       `Missing Firebase environment variables: ${missingKeys.join(", ")}. ` +
@@ -34,19 +41,51 @@ function assertConfig(config: Record<string, string | undefined>) {
   }
 }
 
+function createServerOnlyThrowingProxy<T extends object>(message: string): T {
+  // Create an object that throws on any property access; helps catch accidental server usage without failing build at import time.
+  return new Proxy({} as T, {
+    get() {
+      throw new Error(message);
+    },
+    apply() {
+      throw new Error(message);
+    },
+    construct() {
+      throw new Error(message);
+    },
+  });
+}
+
 export function initFirebaseApp(): FirebaseApp {
+  // During SSR/prerender we must not initialize the Firebase client SDK.
+  if (!isBrowser) {
+    // Return the existing app if for some reason it exists; otherwise a typed placeholder.
+    return (getApps()[0] as FirebaseApp) ?? ({} as FirebaseApp);
+  }
+
   if (!getApps().length) {
-    assertConfig(requiredConfig);
+    assertClientEnvIfBrowser(requiredConfig);
     initializeApp(firebaseConfig);
   }
 
   return getApp();
 }
 
-export function getFirebaseAuth() {
+export function getFirebaseAuth(): Auth {
+  if (!isBrowser) {
+    // Avoid crashing static generation; throw only if someone actually tries to use it on the server.
+    return createServerOnlyThrowingProxy<Auth>(
+      "getFirebaseAuth() is only available in the browser (client components).",
+    );
+  }
   return getAuth(initFirebaseApp());
 }
 
 export function getFirebaseStorage(): FirebaseStorage {
+  if (!isBrowser) {
+    return createServerOnlyThrowingProxy<FirebaseStorage>(
+      "getFirebaseStorage() is only available in the browser (client components).",
+    );
+  }
   return getStorage(initFirebaseApp());
 }

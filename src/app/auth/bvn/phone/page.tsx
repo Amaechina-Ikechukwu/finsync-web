@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { useToast } from "@/components/toast/ToastProvider";
 const inputClasses =
   "w-full rounded-xl border border-black/10 bg-white/80 px-4 py-3 text-sm transition focus:border-black/40 focus:outline-none focus:ring-4 focus:ring-black/5";
 
-export default function BVNPhonePage() {
+function BVNPhonePageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const sessionId = params.get("sessionId") ?? "";
@@ -27,6 +27,7 @@ export default function BVNPhonePage() {
   // Guard: must be logged in; if already verified, go dashboard
   useEffect(() => {
     let cancelled = false;
+
     const run = async () => {
       if (authLoading) return;
       if (!user) {
@@ -39,10 +40,12 @@ export default function BVNPhonePage() {
         router.replace("/auth/signin");
         return;
       }
+
       try {
         const token = await getIdToken();
         if (!token) throw new Error("No token");
         const me = await fetchCurrentUser(token);
+
         if (me?.data?.bvnVerified) {
           push({
             title: "Already verified",
@@ -60,19 +63,19 @@ export default function BVNPhonePage() {
           variant: "error",
         });
         router.replace("/auth/signin");
-        return;
       } finally {
         if (!cancelled) setChecking(false);
       }
     };
+
     void run();
     return () => {
       cancelled = true;
     };
   }, [authLoading, user, getIdToken, router, push]);
 
+  // Prefill masked hint if available
   useEffect(() => {
-    // prefill masked hint if available
     if (maskedPhone) setPhone(maskedPhone.replace(/\*/g, ""));
   }, [maskedPhone]);
 
@@ -116,7 +119,6 @@ export default function BVNPhonePage() {
         throw new Error(json?.message || "Phone verification failed");
 
       const otpId = json?.data?.otpId;
-
       router.push(`/auth/bvn/otp?otpId=${encodeURIComponent(otpId ?? "")}`);
     } catch (err) {
       const message =
@@ -155,7 +157,6 @@ export default function BVNPhonePage() {
           <input
             id="phone-input"
             inputMode="numeric"
-            // pattern="\\d*"
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
             placeholder="08101234567"
@@ -186,5 +187,19 @@ export default function BVNPhonePage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function BVNPhonePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen grid place-items-center">
+          <Loader message="Loading..." />
+        </div>
+      }
+    >
+      <BVNPhonePageInner />
+    </Suspense>
   );
 }

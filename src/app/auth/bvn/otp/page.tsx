@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { useToast } from "@/components/toast/ToastProvider";
 const inputClasses =
   "w-full rounded-xl border border-black/10 bg-white/80 px-4 py-3 text-sm transition focus:border-black/40 focus:outline-none focus:ring-4 focus:ring-black/5";
 
-export default function BVNOtpPage() {
+function BVNOtpPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const otpId = params.get("otpId") ?? "";
@@ -177,5 +177,19 @@ export default function BVNOtpPage() {
         </form>
       </div>
     </main>
+  );
+}
+
+export default function BVNOtpPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen grid place-items-center">
+          <Loader message="Loading..." />
+        </div>
+      }
+    >
+      <BVNOtpPageInner />
+    </Suspense>
   );
 }

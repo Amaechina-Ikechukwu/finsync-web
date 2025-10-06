@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -281,7 +281,7 @@ function DollarCardPanel() {
   );
 }
 
-export default function CardsPage() {
+function CardsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { push } = useToast();
@@ -376,5 +376,19 @@ export default function CardsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-2xl border border-black/10 bg-white/70 p-6">
+          <p className="text-sm text-neutral-600">Loading cards…</p>
+        </div>
+      }
+    >
+      <CardsPageInner />
+    </Suspense>
   );
 }
