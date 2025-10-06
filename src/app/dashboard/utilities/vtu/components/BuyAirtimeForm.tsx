@@ -65,7 +65,7 @@ export function BuyAirtimeForm() {
     }
     try {
       setSubmitting(true);
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
       const request_id = form.reference?.trim() || `req_${Date.now()}`; // fallback
       const payload = {

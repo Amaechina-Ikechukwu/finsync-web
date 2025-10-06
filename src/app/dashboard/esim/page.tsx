@@ -80,7 +80,7 @@ export default function EsimPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const mine = await fetchEsimUserPurchases(token);
         if (!cancelled) setPurchases(mine);
@@ -105,7 +105,7 @@ export default function EsimPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return; // no auth token available
         const cs = await fetchEsimCountries(token, { uid: user.uid });
         if (!cancelled) setCountries(cs);
@@ -133,7 +133,7 @@ export default function EsimPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         const countrySlug =
           selectedCountry?.slug ?? selectedCountry?.code ?? selectedCountry?.country_code ?? "";
@@ -163,7 +163,7 @@ export default function EsimPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         const countrySlug =
           selectedCountry?.slug || selectedCountry?.code || "";
@@ -191,7 +191,7 @@ export default function EsimPage() {
     setIsPurchasing(true);
     setError("");
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) return;
       await purchaseEsim(token, {
         packageId: selectedPackage.id,

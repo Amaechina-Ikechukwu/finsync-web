@@ -151,7 +151,7 @@ export default function CreateDollarCardPage() {
       return;
     }
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) {
         throw new Error("Authentication token unavailable");
       }

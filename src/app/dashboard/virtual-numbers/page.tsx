@@ -80,7 +80,7 @@ export default function VirtualNumbersPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const history = await fetchVirtualNumberPurchases(token);
         if (!cancelled) setPurchases(history);
@@ -104,7 +104,7 @@ export default function VirtualNumbersPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         const cs = await fetchVirtualNumberCountries(token);
         if (!cancelled) setCountries(cs);
@@ -129,7 +129,7 @@ export default function VirtualNumbersPage() {
       setLoading(true);
       setError("");
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         await fetchVirtualNumberPrices(
           token,
@@ -156,7 +156,7 @@ export default function VirtualNumbersPage() {
       setSmsLoading(true);
       setSmsMessages(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         const sms = await fetchVirtualNumberSms(
           token,
@@ -511,7 +511,7 @@ export default function VirtualNumbersPage() {
         countryName={selectedCountry?.name || selectedCountry?.text_en}
         onPurchased={async () => {
           try {
-            const token = await getIdToken();
+            const token = await getIdToken(true);
             if (!token) return;
             const history = await fetchVirtualNumberPurchases(token);
             setPurchases(history);

@@ -47,7 +47,7 @@ function useDataPlans(network: string | null) {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("Missing auth token");
         const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/u, "") || "";
         if (!base) throw new Error("API base not configured");

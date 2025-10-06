@@ -88,7 +88,7 @@ export function BettingForm({
       onVerification?.("loading");
       setLastAttemptedId(cid + "|" + form.service_id);
       setVerifyError(null);
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
       const data = await verifyBettingCustomer(token, {
         customer_id: cid,
@@ -135,7 +135,7 @@ export function BettingForm({
     try {
       setFunding(true);
       onVerification?.("loading"); // show activity feed loading entry for funding
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
       const data = await fundBettingAccount(token, {
         customer_id: form.customer_id.trim(),

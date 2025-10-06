@@ -39,7 +39,7 @@ function BVNOtpPageInner() {
         return;
       }
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No token");
         const me = await fetchCurrentUser(token);
         if (me?.data?.bvnVerified) {
@@ -52,7 +52,47 @@ function BVNOtpPageInner() {
           router.replace("/dashboard");
           return;
         }
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("NEXT_PUBLIC_API_URL is not configured")) {
+          push({
+            title: "App not configured",
+            description:
+              "Missing NEXT_PUBLIC_API_URL. Set it in .env.local and reload.",
+            variant: "error",
+          });
+          return;
+        }
+        const statusMatch = message.match(/Failed to fetch user \((\d{3})\)/);
+        if (statusMatch) {
+          const status = Number(statusMatch[1]);
+          if (status === 401) {
+            push({
+              title: "Session expired",
+              description: "Please sign in again.",
+              variant: "error",
+            });
+            router.replace("/auth/signin");
+            return;
+          }
+          push({
+            title: `Profile load failed (${status})`,
+            description: "We'll keep you here. Try again shortly.",
+            variant: "warning",
+          });
+          return;
+        }
+        if (
+          message.includes("Failed to fetch") ||
+          message.includes("NetworkError")
+        ) {
+          push({
+            title: "Network error",
+            description: "We couldn't reach the API. Check your connection.",
+            variant: "warning",
+          });
+          return;
+        }
         push({
           title: "Session expired",
           description: "Please sign in again.",
@@ -87,7 +127,7 @@ function BVNOtpPageInner() {
     setIsSubmitting(true);
 
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
 
       const localUrl = process.env.NEXT_PUBLIC_API_URL ?? "";

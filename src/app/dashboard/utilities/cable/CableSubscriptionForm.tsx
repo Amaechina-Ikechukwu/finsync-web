@@ -58,7 +58,7 @@ export function CableSubscriptionForm() {
       setVerifyError(null);
       try {
         setLoadingPlans(true);
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("Not authenticated");
         const data = await fetchCableVariations(token, form.service_id, { customer_id: form.customer_id || undefined });
         if (!cancelled) setPlans(data);
@@ -84,7 +84,7 @@ export function CableSubscriptionForm() {
     const handle = setTimeout(async () => {
       try {
         setVerifying(true);
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("Not authenticated");
         const data = await verifyCableCustomer(token, { customer_id: form.customer_id.trim(), service_id: form.service_id });
         if (!cancelled) {
@@ -127,7 +127,7 @@ export function CableSubscriptionForm() {
     }
     try {
       setSubmitting(true);
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
       const payload = {
         customer_id: verification.customer_id || form.customer_id.trim(),

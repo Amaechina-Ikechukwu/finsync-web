@@ -133,7 +133,7 @@ export default function CryptoPage() {
     setBuyFormError(null);
     setBuyConfirmLoading(true);
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("No auth token available");
 
       const response = await createCryptoBuyOrder(token, {
@@ -283,7 +283,7 @@ export default function CryptoPage() {
     sellEstimateTimeoutRef.current = window.setTimeout(() => {
       const run = async () => {
         try {
-          const token = await getIdToken();
+          const token = await getIdToken(true);
           if (!token) throw new Error("No auth token available");
           const estimate = await fetchCryptoSellEstimate(token, {
             coinId: selectedCoinId,

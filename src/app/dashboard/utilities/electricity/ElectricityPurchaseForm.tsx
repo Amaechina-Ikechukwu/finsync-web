@@ -85,7 +85,7 @@ export function ElectricityPurchaseForm() {
     }
     try {
       setSubmitting(true);
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("Not authenticated");
       const request_id = form.reference.trim() || `req_${Date.now()}`;
       const payload = {
@@ -127,7 +127,7 @@ export function ElectricityPurchaseForm() {
     const handle = setTimeout(async () => {
       try {
         setVerifying(true);
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("Not authenticated");
         const data = await verifyElectricMeter(token, {
           customer_id: form.customer_id.trim(),

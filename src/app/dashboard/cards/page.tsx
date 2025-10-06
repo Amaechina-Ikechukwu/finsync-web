@@ -73,7 +73,7 @@ function DollarCardPanel() {
     e.preventDefault();
     setSaving(true);
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("No auth token");
       await updateStrowalletCustomer(token, card.customer_id, form, {
         email: card.customer_email,
@@ -103,7 +103,7 @@ function DollarCardPanel() {
     setQuoteError(null);
     setLastQuoteOk(null);
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) throw new Error("No auth token");
       await getDollarFundEstimate(token, amount);
       setLastQuoteOk(true);

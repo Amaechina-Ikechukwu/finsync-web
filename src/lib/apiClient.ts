@@ -2163,7 +2163,7 @@ export function useCurrentUserProfile() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const result = await fetchCurrentUser(token);
         if (!cancelled) setProfile(result.data);
@@ -2196,7 +2196,7 @@ export function useAccountDetails() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const result = await fetchAccountDetails(token);
         // API may return nested data.data
@@ -2244,7 +2244,7 @@ export function useNotifications({
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const items = await fetchNotifications(token, filters);
         if (!cancelled) setNotifications(limit ? items.slice(0, limit) : items);
@@ -2288,7 +2288,7 @@ export function useUnreadNotificationCount({
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const c = await fetchUnreadNotificationCount(token, filters);
         if (!cancelled) setCount(c);
@@ -2324,7 +2324,7 @@ export function useCryptoCoins() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const items = await fetchCryptoBuyCoins(token);
         if (!cancelled) setCoins(items);
@@ -2357,7 +2357,7 @@ export function useDollarCardDetails() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const data = await fetchDollarCardDetails(token);
         if (!cancelled) setCard(data || null);
@@ -2390,7 +2390,7 @@ export function useDollarCardBalance() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const data = await fetchDollarCardBalance(token);
         if (!cancelled) setBalance(data);
@@ -2423,7 +2423,7 @@ export function useNairaCardDetails() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const data = await fetchNairaCardDetails(token);
         if (!cancelled) setCard(data || null);
@@ -2458,7 +2458,7 @@ export function useTransactionSummary() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const result = await fetchTransactionSummary(token);
 
@@ -2499,7 +2499,7 @@ export function useRecentTransactions(limit = 5) {
       setLoading(true);
       setError(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token available");
         const result = await fetchRecentTransactions(token, { limit });
         console.log({ result });

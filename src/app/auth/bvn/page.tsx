@@ -39,7 +39,7 @@ export default function BVNPage() {
         return;
       }
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) throw new Error("No auth token");
         const me = await fetchCurrentUser(token);
         if (me?.data?.bvnVerified) {
@@ -52,8 +52,29 @@ export default function BVNPage() {
           router.replace("/dashboard");
           return;
         }
-      } catch {
-        // If fetching profile fails, assume not allowed and send to signin
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (message.includes("NEXT_PUBLIC_API_URL is not configured")) {
+          push({
+            title: "App not configured",
+            description:
+              "Missing NEXT_PUBLIC_API_URL. Set it in .env.local and reload.",
+            variant: "error",
+          });
+          return;
+        }
+        if (
+          message.includes("Failed to fetch") ||
+          message.includes("NetworkError")
+        ) {
+          push({
+            title: "Network error",
+            description: "We couldn't reach the API. Check your connection.",
+            variant: "warning",
+          });
+          return;
+        }
+        // Default fallthrough: auth likely invalid
         push({
           title: "Session expired",
           description: "Please sign in again.",
@@ -89,7 +110,7 @@ export default function BVNPage() {
 
     try {
       await auth?.currentUser?.reload();
-      const token = await auth.currentUser?.getIdToken();
+      const token = await auth.currentUser?.getIdToken(true);
 
       if (!token) throw new Error("Not authenticated");
 

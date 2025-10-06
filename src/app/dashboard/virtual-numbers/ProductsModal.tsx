@@ -46,7 +46,7 @@ export default function ProductsModal({
       setLoading(true);
       setProducts(null);
       try {
-        const token = await getIdToken();
+        const token = await getIdToken(true);
         if (!token) return;
         const p = await fetchVirtualNumberPrices(token, countryCode);
         if (!cancelled) setProducts(p);
@@ -78,7 +78,7 @@ export default function ProductsModal({
     if (!pending) return;
     setIsPurchasing(true);
     try {
-      const token = await getIdToken();
+      const token = await getIdToken(true);
       if (!token) return;
       await purchaseVirtualNumber(token, {
         country: countryCode,
