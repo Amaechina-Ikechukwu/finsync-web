@@ -168,7 +168,7 @@ export default function SignInPage() {
                     type="password"
                     autoComplete="current-password"
                     required
-                    minLength={8}
+                    minLength={7}
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     placeholder="●●●●●●●●"
