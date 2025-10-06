@@ -135,7 +135,9 @@ export default function EsimPage() {
       try {
         const token = await getIdToken();
         if (!token) return;
-        const ops = await fetchEsimOperators(token, selectedCountry?.slug, {
+        const countrySlug =
+          selectedCountry?.slug ?? selectedCountry?.code ?? selectedCountry?.country_code ?? "";
+        const ops = await fetchEsimOperators(token, String(countrySlug), {
           uid: user.uid,
         });
         if (!cancelled) setOperators(ops);
