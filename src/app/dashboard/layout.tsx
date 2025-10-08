@@ -9,11 +9,13 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/components/toast/ToastProvider";
 import Loader from "@/components/Loader";
 import { fetchCurrentUser } from "@/lib/apiClient";
+import SetTransactionPinModal from "@/components/SetTransactionPinModal";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [showSetPin, setShowSetPin] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -38,6 +40,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         const token = await getIdToken(true);
         if (!token) throw new Error("No token");
         const me = await fetchCurrentUser(token);
+        // If user has no transaction pin, show set-pin modal (don't redirect)
+        if (me?.data && !me.data.hasTransactionPin) {
+          setShowSetPin(true);
+        }
         if (!me?.data?.bvnVerified) {
           push({
             title: "Complete BVN verification",
@@ -151,6 +157,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 { href: "/dashboard/cards", label: "Cards" },
                 { href: "/dashboard/crypto", label: "Crypto" },
                 { href: "/dashboard/esim", label: "eSIM" },
+                { href: "/dashboard/transfers", label: "Trasfers" },
                 {
                   href: "/dashboard/virtual-numbers",
                   label: "Virtual Numbers",
@@ -228,6 +235,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       ) : null}
+      {/* Set transaction PIN modal */}
+      {showSetPin && (
+        <SetTransactionPinModal onClose={() => setShowSetPin(false)} />
+      )}
     </div>
   );
 }

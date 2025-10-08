@@ -20,10 +20,8 @@ export default function OverviewPage() {
             <AccountInfoCard />
           </div>
           <div className="sm:col-span-2 lg:col-span-3">
-            <UserCards /> 
+            <UserCards />
           </div>
-         
-       
         </div>
         <div className="mt-8 space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-[0.26em] text-neutral-500">
@@ -37,7 +35,7 @@ export default function OverviewPage() {
           <RecentTransactions limit={5} />
         </div>
         <div className="space-y-6">
-          <ActivityFeed
+          {/* <ActivityFeed
             items={[
               {
                 id: "1",
@@ -56,7 +54,7 @@ export default function OverviewPage() {
                 meta: "Team marketing • +$2,500",
               },
             ]}
-          />
+          /> */}
           <NotificationList limit={6} pollIntervalMs={60000} />
           <div className="rounded-2xl border border-black/10 bg-white/70 p-5">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.26em] text-neutral-500">

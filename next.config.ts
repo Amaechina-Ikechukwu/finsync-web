@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.airalo.com",
       },
+      {
+        protocol: "https",
+        hostname: "nigerianbanks.xyz",
+      },
     ],
   },
 };

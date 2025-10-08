@@ -398,6 +398,260 @@ export interface BuyAirtimeRequest {
   request_id?: string; // optional client-generated reference for idempotency
 }
 
+// ------------------ Transfers / Banks ------------------
+export interface BankItem {
+  name: string;
+  slug?: string;
+  code?: string;
+  ussd?: string;
+  logo?: string;
+  [key: string]: unknown;
+}
+
+export interface FetchBanksResponse {
+  success: boolean;
+  status?: number;
+  message?: string;
+  data: BankItem[] | { data: BankItem[] };
+}
+
+export interface InitiateTransferRequest {
+  account_number: string;
+  account_bank: string; // bank code
+  amount: string | number;
+  currency?: string;
+}
+
+export interface InitiateTransferResponse {
+  success: boolean;
+  message?: string;
+  status?: number;
+  data?: unknown;
+}
+
+/**
+ * Fetch list of banks from the API
+ * GET /transfers/getbanks
+ */
+export async function fetchBanks(token: string): Promise<BankItem[]> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  // Updated to Paystack banks endpoint
+  const res = await fetch(`${API_BASE}/paystack/banks`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: FetchBanksResponse | null = null;
+  try {
+    json = JSON.parse(text) as FetchBanksResponse;
+  } catch {
+    /* ignore parse errors */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message = json?.message || `Failed to fetch banks (${res.status})`;
+    throw new Error(message);
+  }
+  const unwrapped = unwrapData<BankItem[] | { data: BankItem[] }>(json.data);
+  if (Array.isArray(unwrapped)) return unwrapped;
+  return unwrapData<BankItem[]>(unwrapped);
+}
+
+export interface ResolveAccountRequest {
+  account_number: string;
+  account_bank: string; // bank code
+}
+
+export interface ResolveAccountResponse {
+  success: boolean;
+  message?: string;
+  status?: number;
+  data?:
+    | {
+        account_name?: string;
+        account_number?: string;
+        bank_name?: string;
+        bank_code?: string;
+        [key: string]: unknown;
+      }
+    | { data: unknown };
+}
+
+/**
+ * Resolve/verify an account number for a bank
+ * POST /transfers/resolveaccount
+ */
+export async function resolveAccount(
+  token: string,
+  payload: ResolveAccountRequest,
+): Promise<ResolveAccountResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  // Updated to Paystack verify account endpoint; translates account_bank->bank_code
+  const body = {
+    account_number: payload.account_number,
+    bank_code:
+      (payload as unknown as { bank_code?: string }).bank_code ??
+      payload.account_bank,
+  };
+  const res = await fetch(`${API_BASE}/paystack/verify-account`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: ResolveAccountResponse | null = null;
+  try {
+    json = JSON.parse(text) as ResolveAccountResponse;
+  } catch {
+    /* ignore parse errors */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message =
+      json?.message || `Failed to resolve account (${res.status})`;
+    throw new Error(message);
+  }
+  return json;
+}
+
+// ============ Paystack recipient + transfer (new API) ============
+export interface CreateRecipientRequest {
+  account_number: string;
+  bank_code: string;
+  name: string;
+}
+
+export interface CreateRecipientResponse {
+  success: boolean;
+  message?: string;
+  data?: unknown;
+}
+
+export async function createPaystackRecipient(
+  token: string,
+  payload: CreateRecipientRequest,
+): Promise<CreateRecipientResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/paystack/recipients`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: CreateRecipientResponse | null = null;
+  try {
+    json = JSON.parse(text) as CreateRecipientResponse;
+  } catch {
+    /* tolerate non-JSON errors */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message =
+      json?.message || `Failed to create recipient (${res.status})`;
+    throw new Error(message);
+  }
+  return json;
+}
+
+export interface PaystackTransferRequest {
+  amount: string | number;
+  pin: string;
+  recipient_code: string;
+}
+
+export interface PaystackTransferResponse {
+  success: boolean;
+  message?: string;
+  data?: unknown;
+}
+
+export async function initiatePaystackTransfer(
+  token: string,
+  payload: PaystackTransferRequest,
+): Promise<PaystackTransferResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/paystack/transfer`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: PaystackTransferResponse | null = null;
+  try {
+    json = JSON.parse(text) as PaystackTransferResponse;
+  } catch {
+    /* tolerate non-JSON */
+  }
+  if (!res.ok || !json || json.success === false) {
+    const message =
+      json?.message || `Failed to initiate transfer (${res.status})`;
+    throw new Error(message);
+  }
+  return json;
+}
+
+/**
+ * Initiate a transfer
+ * POST /transfers/initiatetransfer
+ */
+export async function initiateTransfer(
+  token: string,
+  payload: InitiateTransferRequest,
+): Promise<InitiateTransferResponse | null> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/transfers/initiatetransfer`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  if (res.status === 204) return null; // per example no response body
+
+  const text = await res.text();
+  if (!res.ok) {
+    let parsed: unknown = text;
+    try {
+      parsed = JSON.parse(text);
+    } catch (_e) {
+      // noop
+    }
+    let msg = text;
+    if (typeof parsed === "object" && parsed !== null && "message" in parsed) {
+      const p = parsed as Record<string, unknown>;
+      msg =
+        typeof p.message === "string" ? p.message : String(p.message ?? text);
+    }
+    throw new Error(`Failed to initiate transfer (${res.status}): ${msg}`);
+  }
+
+  try {
+    return JSON.parse(text) as InitiateTransferResponse;
+  } catch {
+    return { success: true, message: text } as InitiateTransferResponse;
+  }
+}
+
 export interface BuyAirtimeSuccessData {
   order_id: number;
   status: string; // e.g. completed-api
@@ -618,6 +872,56 @@ export async function fetchTransactionSummary(
     );
   }
   return (await res.json()) as TransactionSummaryResponse;
+}
+
+export interface SetTransactionPinResponse {
+  success: boolean;
+  message?: string;
+}
+
+/**
+ * Set the user's transaction PIN.
+ * POST /transfers/set-transaction-pin
+ */
+export async function setTransactionPin(
+  token: string,
+  pin: string,
+): Promise<SetTransactionPinResponse> {
+  if (!API_BASE) throw new Error("NEXT_PUBLIC_API_URL is not configured");
+  const res = await fetch(`${API_BASE}/transfers/set-transaction-pin`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ pin }),
+    cache: "no-store",
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    // Try to surface backend message when possible
+    let parsed: unknown = text;
+    try {
+      parsed = JSON.parse(text);
+    } catch (_e) {
+      // noop
+    }
+    let msg = text;
+    if (typeof parsed === "object" && parsed !== null && "message" in parsed) {
+      const p = parsed as Record<string, unknown>;
+      msg =
+        typeof p.message === "string" ? p.message : String(p.message ?? text);
+    }
+    throw new Error(`Failed to set transaction pin (${res.status}): ${msg}`);
+  }
+
+  try {
+    return JSON.parse(text) as SetTransactionPinResponse;
+  } catch (_e) {
+    return { success: true, message: text };
+  }
 }
 
 // Fetch notifications list (optionally filtered by country/operator/product via body even though it's a GET)

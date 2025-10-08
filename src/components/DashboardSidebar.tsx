@@ -15,6 +15,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/cards", label: "Cards" },
   { href: "/dashboard/crypto", label: "Crypto" },
   { href: "/dashboard/esim", label: "eSIM" },
+  { href: "/dashboard/transfers", label: "Transfers" },
   { href: "/dashboard/virtual-numbers", label: "Virtual Numbers" },
 ];
 
